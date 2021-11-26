@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
+    <title>Title</title>
+
+    <script src="http://libs.baidu.com/jquery/2.0.0/jquery.js">
+    </script>
+    <style type="text/css">
+        html{height:100%}
+        body{height:100%;margin:0px;padding:0px}
+        #container{height:100%}
+    </style>
+    <script type="text/javascript" src="http://api.map.baidu.com/api?v=3.0&ak=3wVPIEwq9aTnfucKA9GcPFZP2fX9gZW6">
+    </script>
+
+</head>
+<body>
+    <p id="acc">
+    </p>
+    <p>
+        这里是展示地图
+    </p>
+    <p>
+        刷新方式：
+        <select class="refreshChoice" name="refreshChoice"> <!--别把class写成calss了ヽ(●-`Д´-)ノ-->
+            <option  selected="selected" id="manual" value="手动刷新"  >手动刷新</option> <!--设置手动刷新为默认选项，但是在火狐上好像有bug-->
+            <option id="auto" value="自动刷新" >自动刷新</option>
+        </select>
+
+    <div id="manualDiv" class="manualDiv">
+        <button id="getCurrentPosition" onclick="changeMarkerPosition()">刷新</button>
+
+    </div>
+
+    </p>
+
+    <script>
+        let timer;
+        //利用jq监测下拉菜单的状态
+        $(document).ready(function(){
+            $(".refreshChoice").change(function(){
+                if ($(this).find("option:checked").attr("id")=="manual"){
+                    $(document).ready(function(){
+                        $("#manualDiv").show();//如果选择了手动,就把面板显示出来
+                        clearInterval(timer);
+                    });
+                }else if($(this).find("option:checked").attr("id")=="auto"){
+                    $("#manualDiv").hide();//如果选择了自动，就把面板隐藏。
+
+                    timer = setInterval(changeMarkerPosition,3000);
+                    //每隔3秒刷新一次点的坐标
+
+                }
+
+            });
+        });
+    </script>
+    <div id="container">
+    </div>
+    <script type="text/javascript">
+        function  getCurrentPosition(){
+            let position = [];
+            let lon;
+            let lat;
+            lon=(1218191+Math.random()*2)/10000
+            lat=(390923+Math.random()*6)/10000
+
+            position[0]=lon;
+            position[1]=lat;
+            return position;
+        }
+        let map = new BMap.Map("container");//地图的实例
+
+        let myPosition = [];
+        myPosition = getCurrentPosition();
+        console.log(myPosition)
+        console.log(myPosition)
+        let point;
+        let marker;
+        setTimeout(function () {
+            point = new BMap.Point(myPosition[0], myPosition[1]);//这里已经能得到，就不打印了
+            map.centerAndZoom(point, 19);
+            marker = new BMap.Marker(point);
+            map.addOverlay(marker);
+            map.enableScrollWheelZoom(true);
+        },500);
+        function changeMarkerPosition(){
+            setTimeout(function () {
+                myPosition=gpsdata;
+                point = new BMap.Point(myPosition[0], myPosition[1]);//得到了最新的坐标点
+                console.log("地图中心："+myPosition[0]+"  "+myPosition[1]);
+                marker = new BMap.Marker(point);
+                //map.centerAndZoom(point, 14);
+                map.clearOverlays();//在地图上清除掉所有的覆盖物。
+                map.addOverlay(marker);
+            },200);
+        }
+    </script>
+    <script>
+        function getaccinfo(){
+            document.getElementById("acc").innerHTML = "x y z 轴加速度为"+ message[0]+" "+message[1]+" "+message[2];
+        }
+        let message
+        let gpsdata
+        ws =new WebSocket("ws://192.168.43.164:8080/");
+        ws.onopen = function (ev) { //若是连接成功，onopen函数会执行
+            console.log(22222)
+        };
+        ws.onmessage = function (ev) {//onmessage会接收到推送过来的消息
+            console.log(ev.data);
+            message=ev.data.split(',');
+            console.log(message);
+            getaccinfo();
+            gpsdata[0]=message[3];
+            gpsdata[1]=message[4];
+
+        }
+    </script>
+</body>
+</html>
+
+
+
